@@ -4,18 +4,16 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import androidx.core.content.FileProvider
 import java.io.ByteArrayOutputStream
 import java.io.File
 
 object ImageUtils {
     private const val LADO_MAXIMO = 512
 
-    // Crea un archivo temporal y su uri (FileProvider) para que la cámara guarde ahí la foto
-    fun crearUriTemporal(context: Context): Uri {
+    // Archivo temporal donde CameraX guarda la foto recién tomada
+    fun crearArchivoTemporal(context: Context): File {
         val carpeta = File(context.cacheDir, "fotos").apply { mkdirs() }
-        val archivo = File.createTempFile("perfil_", ".jpg", carpeta)
-        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", archivo)
+        return File.createTempFile("perfil_", ".jpg", carpeta)
     }
 
     // Reduce la foto a 512 px y la comprime en JPEG: sube rápido y el marcador la carga sin esperar

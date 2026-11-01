@@ -1,7 +1,6 @@
 package com.example.registro.ui.components
 
 import android.Manifest
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -27,19 +26,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import coil3.compose.AsyncImage
 import com.example.registro.R
-import com.example.registro.utils.ImageUtils
 
 // Foto de perfil circular + botones para tomarla con la cámara o elegirla de la galería
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun ProfilePhotoPicker(
     foto: Any?,
@@ -47,19 +52,12 @@ fun ProfilePhotoPicker(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    var uriPendiente by remember { mutableStateOf<Uri?>(null) }
+    var camaraAbierta by rememberSaveable { mutableStateOf(false) }
 
-    val camara = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
-        if (ok) uriPendiente?.let(onFotoElegida)
-    }
-    val permisoCamara = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
-        if (concedido) {
-            val uri = ImageUtils.crearUriTemporal(context)
-            uriPendiente = uri
-            camara.launch(uri)
-        } else {
-            Toast.makeText(context, R.string.camera_permission_denied, Toast.LENGTH_SHORT).show()
-        }
+    // Permiso de cámara con accompanist: si se concede, se abre la vista previa de CameraX
+    val permisoCamara = rememberPermissionState(Manifest.permission.CAMERA) { concedido ->
+        if (concedido) camaraAbierta = true
+        else Toast.makeText(context, R.string.camera_permission_denied, Toast.LENGTH_SHORT).show()
     }
     val galeria = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri?.let(onFotoElegida)
@@ -90,17 +88,24 @@ fun ProfilePhotoPicker(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 12.dp)) {
             BotonSecundario(texto = stringResource(R.string.take_photo), icono = Icons.Rounded.CameraAlt, fillWidth = false, onClick = {
-                if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                    val uri = ImageUtils.crearUriTemporal(context)
-                    uriPendiente = uri
-                    camara.launch(uri)
-                } else {
-                    permisoCamara.launch(Manifest.permission.CAMERA)
-                }
+                if (permisoCamara.status.isGranted) camaraAbierta = true
+                else permisoCamara.launchPermissionRequest()
             })
             BotonSecundario(texto = stringResource(R.string.pick_photo), icono = Icons.Rounded.PhotoLibrary, fillWidth = false, onClick = {
                 galeria.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             })
+        }
+    }
+    if (camaraAbierta) {
+        Dialog(
+            onDismissRequest = { camaraAbierta = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+        ) {
+            CameraPreviewContent(
+                onFotoTomada = { uri -> camaraAbierta = false; onFotoElegida(uri) },
+                onCerrar = { camaraAbierta = false },
+                modifier = Modifier.fillMaxSize(),
+            )
         }
     }
 }
