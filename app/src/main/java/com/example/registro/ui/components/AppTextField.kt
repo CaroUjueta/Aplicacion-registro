@@ -7,7 +7,6 @@ import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,11 +32,10 @@ fun AppTextField(
     error: String? = null,
 ) {
     var visible by remember { mutableStateOf(false) }
-    OutlinedTextField(
+    PillTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
-        singleLine = true,
         enabled = enabled,
         isError = error != null,
         supportingText = error?.let { { Text(it) } },
