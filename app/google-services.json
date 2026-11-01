@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "189229175537",
+    "project_id": "aplicacion-registro-e2cc9",
+    "storage_bucket": "aplicacion-registro-e2cc9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:189229175537:android:0eb66f05ac3073b26c8f50",
+        "android_client_info": {
+          "package_name": "com.example.registro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBoRi4mka5sFqcSEWwDHqVcAL82xtpih4k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
