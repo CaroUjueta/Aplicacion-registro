@@ -1,0 +1,70 @@
+<resources>
+    <string name="app_name">Registro</string>
+
+    <!-- Campos -->
+    <string name="field_name">Nombre</string>
+    <string name="field_email">Correo electrónico</string>
+    <string name="field_password">Contraseña</string>
+    <string name="field_current_password">Contraseña actual</string>
+    <string name="field_new_password">Nueva contraseña</string>
+    <string name="field_phone">Número de teléfono</string>
+    <string name="show_password">Mostrar contraseña</string>
+    <string name="hide_password">Ocultar contraseña</string>
+
+    <!-- Inicio de sesión -->
+    <string name="login_title">Bienvenido</string>
+    <string name="login_subtitle">Inicia sesión para ver a los demás en el mapa</string>
+    <string name="login_button">Iniciar sesión</string>
+    <string name="go_to_register">¿No tienes cuenta? Regístrate</string>
+
+    <!-- Registro -->
+    <string name="register_title">Crear cuenta</string>
+    <string name="register_button">Registrarme</string>
+    <string name="go_to_login">¿Ya tienes cuenta? Inicia sesión</string>
+    <string name="back">Volver</string>
+
+    <!-- Foto de perfil -->
+    <string name="profile_photo">Foto de perfil</string>
+    <string name="take_photo">Tomar foto</string>
+    <string name="pick_photo">Galería</string>
+    <string name="photo_optional">La foto se verá en tu marcador del mapa</string>
+    <string name="camera_permission_denied">Se necesita el permiso de cámara para tomar la foto</string>
+    <string name="photo_uploaded">Foto actualizada</string>
+
+    <!-- Mapa -->
+    <string name="map_title">Mapa en vivo</string>
+    <string name="share_location">Compartir mi ubicación</string>
+    <string name="location_on">Te están viendo en el mapa</string>
+    <string name="location_off">Ubicación apagada</string>
+    <string name="users_online">En línea: %1$d</string>
+    <string name="center_location">Centrar en mi ubicación</string>
+    <string name="location_permission_denied">Se necesita el permiso de ubicación para compartir tu posición</string>
+    <string name="welcome_user">Hola, %1$s</string>
+    <string name="you">Tú</string>
+
+    <!-- Menú -->
+    <string name="menu">Menú</string>
+    <string name="menu_profile">Mi perfil</string>
+    <string name="menu_logout">Cerrar sesión</string>
+
+    <!-- Perfil -->
+    <string name="profile_title">Mi perfil</string>
+    <string name="save_changes">Guardar cambios</string>
+    <string name="change_password">Cambiar contraseña</string>
+    <string name="profile_saved">Perfil actualizado</string>
+    <string name="password_changed">Contraseña actualizada</string>
+    <string name="password_section">Seguridad</string>
+
+    <!-- Errores -->
+    <string name="error_name_required">Escribe tu nombre</string>
+    <string name="error_email_invalid">Correo electrónico inválido</string>
+    <string name="error_password_short">Mínimo 6 caracteres</string>
+    <string name="error_phone_invalid">Teléfono inválido (7 a 15 dígitos)</string>
+    <string name="error_wrong_credentials">Correo o contraseña incorrectos</string>
+    <string name="error_email_in_use">Ese correo ya está registrado</string>
+    <string name="error_weak_password">La contraseña es muy débil</string>
+    <string name="error_network">Sin conexión a internet</string>
+    <string name="error_too_many">Demasiados intentos, espera un momento</string>
+    <string name="error_unknown">Ocurrió un error, inténtalo de nuevo</string>
+    <string name="error_photo_upload">No se pudo subir la foto</string>
+</resources>
