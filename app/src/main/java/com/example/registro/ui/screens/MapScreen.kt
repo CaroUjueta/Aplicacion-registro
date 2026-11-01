@@ -47,6 +47,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.registro.R
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -72,6 +75,7 @@ import com.example.registro.viewmodels.MapViewModel
 
 private const val MAP_ZOOM = 16.0
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MapScreen(
     viewModel: MapViewModel,
@@ -86,10 +90,10 @@ fun MapScreen(
     var bienvenidaMostrada by rememberSaveable { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
 
-    fun tienePermiso() = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-
-    // Permiso de ubicación: si se concede, se enciende el rastreo que el usuario pidió con el switch
-    val permisos = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { resultado ->
+    // Permiso de ubicación con accompanist: si se concede, se enciende el rastreo que se pidió con el switch
+    val permisos = rememberMultiplePermissionsState(
+        listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+    ) { resultado ->
         if (resultado.values.any { it }) {
             viewModel.ubicarUnaVez()
             viewModel.iniciarRastreo()
@@ -97,6 +101,7 @@ fun MapScreen(
             Toast.makeText(context, R.string.location_permission_denied, Toast.LENGTH_LONG).show()
         }
     }
+    fun tienePermiso() = permisos.permissions.any { it.status.isGranted }
 
     LaunchedEffect(Unit) {
         if (tienePermiso()) viewModel.ubicarUnaVez()
@@ -183,9 +188,7 @@ fun MapScreen(
                     when {
                         !encender -> viewModel.detenerRastreo()
                         tienePermiso() -> viewModel.iniciarRastreo()
-                        else -> permisos.launch(
-                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
-                        )
+                        else -> permisos.launchMultiplePermissionRequest()
                     }
                 }
             )
