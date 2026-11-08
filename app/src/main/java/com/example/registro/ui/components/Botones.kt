@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.sp
 
 private val FormaBoton = RoundedCornerShape(12.dp)
 
-/** Botón principal (Ingresar, Registrarme, Guardar). Muestra un indicador mientras `cargando`. */
 @Composable
 fun BotonPrincipal(
     texto: String,
@@ -59,7 +58,6 @@ fun BotonPrincipal(
     }
 }
 
-/** Botón secundario con borde (cambiar contraseña, tomar foto, galería). */
 @Composable
 fun BotonSecundario(
     texto: String,
@@ -83,7 +81,6 @@ fun BotonSecundario(
     }
 }
 
-/** Botón circular con ícono (centrar mapa, volver). */
 @Composable
 fun BotonIconoCircular(
     icono: ImageVector,
@@ -107,7 +104,6 @@ fun BotonIconoCircular(
     }
 }
 
-/** Texto clicable de acción secundaria ("¿Ya tienes cuenta? Inicia sesión"). */
 @Composable
 fun EnlaceAccion(
     texto: String,

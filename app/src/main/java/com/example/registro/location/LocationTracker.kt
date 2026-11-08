@@ -11,7 +11,6 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 
-// Rastreo con FusedLocationProvider (locationUpdates). Solo se inicia con el permiso ya concedido.
 class LocationTracker(context: Context) {
     private val cliente = LocationServices.getFusedLocationProviderClient(context.applicationContext)
     private val solicitud = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 2000L)
@@ -35,7 +34,6 @@ class LocationTracker(context: Context) {
             cliente.requestLocationUpdates(solicitud, nuevo, Looper.getMainLooper())
             callback = nuevo
         } catch (_: SecurityException) {
-            // Sin permiso: no se rastrea
         }
     }
 
@@ -44,7 +42,6 @@ class LocationTracker(context: Context) {
         callback = null
     }
 
-    // Una sola ubicación, para centrar el mapa al abrirlo
     @SuppressLint("MissingPermission")
     fun ubicacionUnica(onUbicacion: (Location) -> Unit) {
         try {

@@ -4,11 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.MyLocation
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
@@ -50,12 +45,10 @@ fun MapComponent(
         MapboxMap(
             Modifier.fillMaxSize(),
             mapViewportState = viewport,
-            // TextureView: evita que el SurfaceView se dibuje en negro en algunos celulares
             composeMapInitOptions = with(LocalDensity.current) {
                 ComposeMapInitOptions(pixelRatio = density, textureView = true)
             },
             scaleBar = { },
-            // Brújula abajo a la izquierda, por encima del panel (solo aparece cuando el mapa no mira al norte)
             compass = {
                 Compass(
                     Modifier,
@@ -66,23 +59,19 @@ fun MapComponent(
                 )
             },
         ) {
-            // La primera vez que llega la ubicación, la cámara vuela hasta ella
             MapEffect(miPosicion != null) {
                 miPosicion?.let { viewport.setCameraOptions { center(it); zoom(16.0) } }
             }
 
-            // Línea del recorrido propio (solo mientras se comparte la ubicación)
             if (state.miRuta.size > 1) {
                 Recorrido(puntos = state.miRuta, color = colorMio)
             }
-            // Línea del recorrido de cada usuario en línea
             state.otros.values.forEach { otro ->
                 key("ruta-${otro.usuario.id}") {
                     if (otro.ruta.size > 1) Recorrido(puntos = otro.ruta, color = colorDeUsuario(otro.usuario.id))
                 }
             }
 
-            // Mi marcador
             miPosicion?.let { punto ->
                 key("yo") {
                     ViewAnnotation(options = opcionesMarcador(punto)) {
@@ -94,7 +83,6 @@ fun MapComponent(
                     }
                 }
             }
-            // Marcadores de los demás usuarios en línea
             state.otros.values.forEach { otro ->
                 key(otro.usuario.id) {
                     ViewAnnotation(options = opcionesMarcador(otro.posicion)) {

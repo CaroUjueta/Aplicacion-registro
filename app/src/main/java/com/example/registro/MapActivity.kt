@@ -13,7 +13,6 @@ import com.example.registro.ui.screens.MapScreen
 import com.example.registro.ui.theme.AppTheme
 import com.example.registro.viewmodels.MapViewModel
 
-// Pantalla principal: mapa + switch de ubicación + menú (perfil / cerrar sesión)
 class MapActivity : ComponentActivity() {
     private val viewModel: MapViewModel by viewModels()
 
@@ -21,6 +20,7 @@ class MapActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val nombre = intent.getStringExtra(Extras.NOMBRE)
+        val email = intent.getStringExtra(Extras.EMAIL)
         setContent {
             AppTheme {
                 MapScreen(
@@ -32,7 +32,7 @@ class MapActivity : ComponentActivity() {
                         startActivity(
                             Intent(this, ProfileActivity::class.java)
                                 .putExtra(Extras.UID, UsuarioRepository.uidActual)
-                                .putExtra(Extras.EMAIL, perfil?.email)
+                                .putExtra(Extras.EMAIL, perfil?.email ?: email)
                         )
                     },
                     onCerrarSesion = {

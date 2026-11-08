@@ -19,13 +19,10 @@ import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.fillMaxSize
@@ -43,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.registro.R
 
-// Foto de perfil circular + botones para tomarla con la cámara o elegirla de la galería
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun ProfilePhotoPicker(
@@ -54,7 +50,6 @@ fun ProfilePhotoPicker(
     val context = LocalContext.current
     var camaraAbierta by rememberSaveable { mutableStateOf(false) }
 
-    // Permiso de cámara con accompanist: si se concede, se abre la vista previa de CameraX
     val permisoCamara = rememberPermissionState(Manifest.permission.CAMERA) { concedido ->
         if (concedido) camaraAbierta = true
         else Toast.makeText(context, R.string.camera_permission_denied, Toast.LENGTH_SHORT).show()

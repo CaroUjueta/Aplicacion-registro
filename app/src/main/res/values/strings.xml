@@ -1,7 +1,6 @@
 <resources>
     <string name="app_name">Registro</string>
 
-    <!-- Campos -->
     <string name="field_name">Nombre</string>
     <string name="field_email">Correo electrónico</string>
     <string name="field_password">Contraseña</string>
@@ -11,34 +10,30 @@
     <string name="show_password">Mostrar contraseña</string>
     <string name="hide_password">Ocultar contraseña</string>
 
-    <!-- Inicio de sesión -->
     <string name="login_title">Bienvenido</string>
     <string name="login_subtitle">Inicia sesión para ver a los demás en el mapa</string>
     <string name="login_button">Iniciar sesión</string>
     <string name="go_to_register">¿No tienes cuenta? Regístrate</string>
+    <string name="forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="reset_email_sent">Te enviamos un correo para restablecer tu contraseña. Revisa también la carpeta de spam.</string>
+    <string name="error_email_required_reset">Escribe tu correo arriba para recuperar la contraseña</string>
 
-    <!-- Registro -->
     <string name="register_title">Crear cuenta</string>
     <string name="register_button">Registrarme</string>
     <string name="go_to_login">¿Ya tienes cuenta? Inicia sesión</string>
-    <string name="back">Volver</string>
 
-    <!-- Foto de perfil -->
     <string name="profile_photo">Foto de perfil</string>
     <string name="take_photo">Tomar foto</string>
     <string name="camera_capture">Capturar foto</string>
     <string name="camera_flip">Cambiar cámara</string>
     <string name="camera_close">Cerrar cámara</string>
     <string name="camera_error">No se pudo tomar la foto</string>
-    <string name="location_permission_rationale">Necesitamos tu ubicación para mostrarte en el mapa</string>
     <string name="pick_photo">Galería</string>
     <string name="photo_optional">La foto se verá en tu marcador del mapa</string>
     <string name="camera_permission_denied">Se necesita el permiso de cámara para tomar la foto</string>
     <string name="photo_uploaded">Foto actualizada</string>
 
-    <!-- Mapa -->
     <string name="map_title">Mapa en vivo</string>
-    <string name="share_location">Compartir mi ubicación</string>
     <string name="location_on">Te están viendo en el mapa</string>
     <string name="location_off">Ubicación apagada</string>
     <string name="users_online">En línea: %1$d</string>
@@ -47,12 +42,10 @@
     <string name="welcome_user">Hola, %1$s</string>
     <string name="you">Tú</string>
 
-    <!-- Menú -->
     <string name="menu">Menú</string>
     <string name="menu_profile">Mi perfil</string>
     <string name="menu_logout">Cerrar sesión</string>
 
-    <!-- Perfil -->
     <string name="profile_title">Mi perfil</string>
     <string name="save_changes">Guardar cambios</string>
     <string name="change_password">Cambiar contraseña</string>
@@ -60,7 +53,6 @@
     <string name="password_changed">Contraseña actualizada</string>
     <string name="password_section">Seguridad</string>
 
-    <!-- Errores -->
     <string name="error_name_required">Escribe tu nombre</string>
     <string name="error_email_invalid">Correo electrónico inválido</string>
     <string name="error_password_short">Mínimo 6 caracteres</string>

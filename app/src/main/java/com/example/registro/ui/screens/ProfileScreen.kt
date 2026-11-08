@@ -4,19 +4,12 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -47,11 +40,9 @@ import androidx.compose.ui.Alignment
 fun ProfileScreen(
     uid: String,
     emailInicial: String,
-    onVolver: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    // Datos actuales de Firestore (se actualizan solos con el snapshot listener)
     val perfil by remember(uid) { UsuarioRepository.perfil(uid) }.collectAsState(initial = null)
 
     var nombre by remember { mutableStateOf("") }
@@ -64,7 +55,6 @@ fun ProfileScreen(
     var nueva by remember { mutableStateOf("") }
     var intentadoClave by remember { mutableStateOf(false) }
 
-    // Los campos se llenan una sola vez con lo guardado, para no pisar lo que el usuario escribe
     LaunchedEffect(perfil) {
         perfil?.let {
             if (!cargado) {
@@ -83,11 +73,6 @@ fun ProfileScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.profile_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                navigationIcon = {
-                    IconButton(onClick = onVolver) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
-                    }
-                }
             )
         }
     ) { padding ->
@@ -99,7 +84,6 @@ fun ProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Foto: la recién tomada (vista previa) o la guardada en Storage
             ProfilePhotoPicker(
                 foto = fotoNueva ?: perfil?.fotoPerfilUrl,
                 onFotoElegida = { uri ->
@@ -110,7 +94,6 @@ fun ProfileScreen(
                 }
             )
 
-            // El correo no se edita: es la identidad en Firebase Auth
             AppTextField(perfil?.email ?: emailInicial, {}, stringResource(R.string.field_email), enabled = false)
             AppTextField(
                 nombre, { nombre = it }, stringResource(R.string.field_name),

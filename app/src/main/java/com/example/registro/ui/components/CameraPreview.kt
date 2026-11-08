@@ -36,7 +36,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.registro.R
 import com.example.registro.viewmodels.CameraViewModel
 
-// Cámara a pantalla completa con CameraX: vista previa, tap para enfocar, cambiar lente y capturar
 @Composable
 fun CameraPreviewContent(
     onFotoTomada: (Uri) -> Unit,

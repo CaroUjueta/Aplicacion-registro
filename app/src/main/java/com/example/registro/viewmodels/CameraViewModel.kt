@@ -25,10 +25,9 @@ import kotlinx.coroutines.flow.update
 
 data class CameraState(
     val surfaceRequest: SurfaceRequest? = null,
-    val useBackLens: Boolean = false, // para la foto de perfil se empieza con la cámara frontal
+    val useBackLens: Boolean = false,
 )
 
-// Vista previa y captura con CameraX (mismo patrón que el ejemplo de clase)
 class CameraViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(CameraState())
     val uiState: StateFlow<CameraState> = _uiState.asStateFlow()

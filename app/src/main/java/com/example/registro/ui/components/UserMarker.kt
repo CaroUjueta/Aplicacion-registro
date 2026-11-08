@@ -25,11 +25,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 
-// Color propio de cada usuario (marcador + línea del recorrido), estable a partir de su uid
 fun colorDeUsuario(uid: String): Color =
     Color.hsv(hue = (uid.hashCode().mod(360)).toFloat(), saturation = 0.55f, value = 0.8f)
 
-// Marcador: nombre + foto de perfil circular con borde de color + punta hacia la posición
 @Composable
 fun UserMarker(
     nombre: String,
@@ -65,7 +63,6 @@ fun UserMarker(
                     modifier = Modifier.size(56.dp)
                 )
             } else {
-                // Sin foto: la inicial del nombre
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         text = nombre.firstOrNull()?.uppercase() ?: "?",

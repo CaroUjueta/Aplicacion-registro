@@ -2,8 +2,6 @@ package com.example.registro.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Paleta pastel: lavanda (primary), rosa orquídea (secondary) y rosa chicle (tertiary)
-
 val PrimaryLight = Color(0xFF7B4FA0)
 val OnPrimaryLight = Color(0xFFFFFFFF)
 val PrimaryContainerLight = Color(0xFFF0DBFF)

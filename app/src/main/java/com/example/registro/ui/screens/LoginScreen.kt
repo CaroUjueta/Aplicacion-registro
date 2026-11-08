@@ -3,7 +3,6 @@ package com.example.registro.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -11,13 +10,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Place
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,6 +43,7 @@ fun LoginScreen(
     var intentado by rememberSaveable { mutableStateOf(false) }
     var cargando by remember { mutableStateOf(false) }
     var errorServidor by remember { mutableStateOf<Int?>(null) }
+    var mensajeInfo by remember { mutableStateOf<Int?>(null) }
 
     val errorEmail = if (intentado && !Validators.emailValido(email)) stringResource(R.string.error_email_invalid) else null
     val errorPassword = if (intentado && !Validators.passwordValida(password)) stringResource(R.string.error_password_short) else null
@@ -81,6 +78,14 @@ fun LoginScreen(
             errorServidor?.let {
                 Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             }
+            mensajeInfo?.let {
+                Text(
+                    stringResource(it),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+            }
 
             BotonPrincipal(
                 texto = stringResource(R.string.login_button),
@@ -89,6 +94,7 @@ fun LoginScreen(
                     if (Validators.emailValido(email) && Validators.passwordValida(password)) {
                         cargando = true
                         errorServidor = null
+                        mensajeInfo = null
                         UsuarioRepository.iniciarSesion(email, password) { resultado ->
                             cargando = false
                             resultado.onSuccess { onLogin(email.trim()) }
@@ -97,6 +103,24 @@ fun LoginScreen(
                     }
                 },
                 cargando = cargando,
+            )
+            EnlaceAccion(
+                texto = stringResource(R.string.forgot_password),
+                onClick = {
+                    mensajeInfo = null
+                    if (!Validators.emailValido(email)) {
+                        errorServidor = R.string.error_email_required_reset
+                    } else {
+                        cargando = true
+                        errorServidor = null
+                        UsuarioRepository.recuperarContrasena(email) { resultado ->
+                            cargando = false
+                            resultado.onSuccess { mensajeInfo = R.string.reset_email_sent }
+                                .onFailure { errorServidor = Validators.mensajeError(it) }
+                        }
+                    }
+                },
+                enabled = !cargando
             )
             EnlaceAccion(stringResource(R.string.go_to_register), onRegistrar, enabled = !cargando)
         }

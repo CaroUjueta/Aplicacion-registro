@@ -21,7 +21,7 @@ class ProfileActivity : ComponentActivity() {
         val email = intent.getStringExtra(Extras.EMAIL).orEmpty()
         setContent {
             AppTheme {
-                ProfileScreen(uid = uid, emailInicial = email, modifier = Modifier.fillMaxSize(), onVolver = { finish() })
+                ProfileScreen(uid = uid, emailInicial = email, modifier = Modifier.fillMaxSize())
             }
         }
     }

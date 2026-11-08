@@ -1,10 +1,7 @@
 package com.example.registro.ui.screens
 
 import android.Manifest
-import android.content.pm.PackageManager
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,21 +14,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.registro.R
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -53,9 +42,6 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
@@ -90,7 +76,6 @@ fun MapScreen(
     var bienvenidaMostrada by rememberSaveable { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
 
-    // Permiso de ubicación con accompanist: si se concede, se enciende el rastreo que se pidió con el switch
     val permisos = rememberMultiplePermissionsState(
         listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
     ) { resultado ->
@@ -105,9 +90,14 @@ fun MapScreen(
 
     LaunchedEffect(Unit) {
         if (tienePermiso()) viewModel.ubicarUnaVez()
-        if (!bienvenidaMostrada && nombreBienvenida != null) {
+    }
+
+    val nombrePerfil = state.miPerfil?.nombre
+    LaunchedEffect(nombrePerfil) {
+        val nombre = nombreBienvenida ?: nombrePerfil
+        if (!bienvenidaMostrada && !nombre.isNullOrBlank()) {
             bienvenidaMostrada = true
-            snackbar.showSnackbar(context.getString(R.string.welcome_user, nombreBienvenida))
+            snackbar.showSnackbar(context.getString(R.string.welcome_user, nombre))
         }
     }
 
@@ -123,10 +113,8 @@ fun MapScreen(
     var alturaPanel by remember { mutableStateOf(0.dp) }
 
     Box(modifier.fillMaxSize()) {
-        // Mapa a pantalla completa (estilo Life360)
         MapComponent(state = state, viewport = viewport, margenInferior = alturaPanel, modifier = Modifier.fillMaxSize())
 
-        // Barra flotante superior: pastilla con el título y el menú
         Row(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -167,7 +155,6 @@ fun MapScreen(
             }
         }
 
-        // Abajo: botón de centrar justo encima del panel de estado
         Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.End) {
                 BotonIconoCircular(
@@ -198,7 +185,6 @@ fun MapScreen(
     }
 }
 
-// Panel inferior redondeado: tu foto, tu estado y el switch de ubicación
 @Composable
 private fun PanelUbicacion(
     modifier: Modifier = Modifier,

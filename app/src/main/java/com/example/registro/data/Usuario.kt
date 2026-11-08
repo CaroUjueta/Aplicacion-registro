@@ -1,6 +1,5 @@
 package com.example.registro.data
 
-// Datos secundarios del usuario (Firestore: perfilesMapa/{uid}). El password vive solo en Firebase Auth.
 data class Usuario(
     val id: String = "",
     val nombre: String = "",

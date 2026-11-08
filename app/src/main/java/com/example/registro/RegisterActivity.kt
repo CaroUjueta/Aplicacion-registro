@@ -19,7 +19,6 @@ class RegisterActivity : ComponentActivity() {
                 RegisterScreen(
                     modifier = Modifier.fillMaxSize(),
                     onRegistrado = { nombre ->
-                        // Registro correcto: al mapa, sin poder volver al formulario con "atrás"
                         val intent = Intent(this, MapActivity::class.java)
                             .putExtra(Extras.NOMBRE, nombre)
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)

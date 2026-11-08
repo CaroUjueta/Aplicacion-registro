@@ -14,9 +14,8 @@ import com.example.registro.ui.theme.AppTheme
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Sesión ya iniciada: directo al mapa
         if (UsuarioRepository.haySesion) {
-            irAlMapa(null)
+            irAlMapa(UsuarioRepository.emailActual)
             return
         }
         enableEdgeToEdge()
@@ -24,15 +23,15 @@ class LoginActivity : ComponentActivity() {
             AppTheme {
                 LoginScreen(
                     modifier = Modifier.fillMaxSize(),
-                    onLogin = { email -> irAlMapa(email.substringBefore('@')) },
+                    onLogin = { email -> irAlMapa(email) },
                     onRegistrar = { startActivity(Intent(this, RegisterActivity::class.java)) }
                 )
             }
         }
     }
 
-    private fun irAlMapa(nombre: String?) {
-        val intent = Intent(this, MapActivity::class.java).putExtra(Extras.NOMBRE, nombre)
+    private fun irAlMapa(email: String?) {
+        val intent = Intent(this, MapActivity::class.java).putExtra(Extras.EMAIL, email)
         startActivity(intent)
         finish()
     }

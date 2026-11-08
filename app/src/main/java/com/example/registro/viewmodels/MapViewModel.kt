@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-// Otro usuario en línea: sus datos, su posición actual y la ruta que ha recorrido mientras lo vemos
 data class OtroUsuario(val usuario: Usuario, val posicion: Point, val ruta: List<Point>)
 
 data class MapState(
@@ -37,7 +36,6 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             UsuarioRepository.perfil(uid).collect { perfil -> _state.update { it.copy(miPerfil = perfil) } }
         }
-        // addSnapshotListener sobre los usuarios en línea: cada movimiento llega como un cambio
         viewModelScope.launch {
             UsuarioRepository.cambiosEnLinea().collect { cambios -> cambios.forEach(::aplicarCambio) }
         }
@@ -51,7 +49,6 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             val lat = usuario.latitud
             val lng = usuario.longitud
             if (cambio.salio || !usuario.enLinea) {
-                // Se desconectó: se limpian su marcador y su línea
                 otros.remove(usuario.id)
             } else if (lat != null && lng != null) {
                 val punto = Point.fromLngLat(lng, lat)
@@ -67,7 +64,6 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Centra el mapa en el usuario al abrirlo (sin escribir nada en la base de datos)
     fun ubicarUnaVez() {
         tracker.ubicacionUnica { loc -> if (_state.value.miPosicion == null) actualizarMiPosicion(loc, guardar = false) }
     }
@@ -82,7 +78,6 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     fun detenerRastreo(onListo: () -> Unit = {}) {
         tracker.detener()
         val estabaRastreando = _state.value.rastreando
-        // Se borra la línea recorrida y se marca desconectado
         _state.update { it.copy(rastreando = false, miRuta = emptyList()) }
         if (estabaRastreando) UsuarioRepository.marcarDesconectado(uid, onListo) else onListo()
     }
@@ -93,7 +88,6 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         if (guardar) UsuarioRepository.actualizarPosicion(uid, loc.latitude, loc.longitude)
     }
 
-    // Primero se marca desconectado (todavía hay sesión para escribir) y luego se cierra la sesión
     fun cerrarSesion(onListo: () -> Unit) {
         detenerRastreo {
             UsuarioRepository.cerrarSesion()
@@ -102,7 +96,6 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     override fun onCleared() {
-        // Si la actividad se cierra con el rastreo encendido, no se deja al usuario "en línea"
         if (_state.value.rastreando) {
             tracker.detener()
             UsuarioRepository.marcarDesconectado(uid)

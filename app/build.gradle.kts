@@ -1,20 +1,9 @@
-import java.util.Properties
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.google.gms.google.services)
 }
-
-// Token de Mapbox: se lee de local.properties (no se sube a git) o de una variable de entorno
-val localProperties = Properties().apply {
-    val file = rootProject.file("local.properties")
-    if (file.exists()) file.inputStream().use { load(it) }
-}
-val mapboxAccessToken: String = localProperties.getProperty("MAPBOX_ACCESS_TOKEN")
-    ?: System.getenv("MAPBOX_ACCESS_TOKEN")
-    ?: ""
 
 android {
     namespace = "com.example.registro"
@@ -30,8 +19,6 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        resValue("string", "mapbox_access_token", mapboxAccessToken)
     }
 
     buildTypes {
@@ -47,7 +34,6 @@ android {
     }
     buildFeatures {
         compose = true
-        resValues = true
     }
 }
 
@@ -70,13 +56,10 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 
-    // Firebase: autenticación (email/contraseña), Firestore (datos del usuario) y Storage (foto de perfil)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
-    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.database)
     implementation(libs.firebase.storage)
-
-
 
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)

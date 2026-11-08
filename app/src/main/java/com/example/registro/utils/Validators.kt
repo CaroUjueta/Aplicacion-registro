@@ -15,7 +15,6 @@ object Validators {
     fun passwordValida(password: String) = password.length >= 6
     fun telefonoValido(telefono: String) = telefono.trim().matches(Regex("^\\+?[0-9]{7,15}$"))
 
-    // Traduce una excepción de Firebase a un mensaje de strings.xml
     @StringRes
     fun mensajeError(e: Throwable?): Int = when (e) {
         is FirebaseAuthInvalidCredentialsException, is FirebaseAuthInvalidUserException -> R.string.error_wrong_credentials

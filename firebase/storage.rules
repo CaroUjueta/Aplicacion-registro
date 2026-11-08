@@ -2,7 +2,6 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-
     function esImagen() {
       return request.resource.contentType.matches('image/.*')
         && request.resource.size < 5 * 1024 * 1024;
@@ -13,7 +12,6 @@ service firebase.storage {
       allow create, update: if request.auth != null && request.auth.uid == uid && esImagen();
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
-
 
     match /{allPaths=**} {
       allow read, write: if false;
