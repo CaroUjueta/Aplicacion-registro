@@ -26,8 +26,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.registro.R
-import com.example.registro.data.UsuarioRepository
+import com.example.registro.viewmodels.AuthEvent
+import com.example.registro.viewmodels.AuthViewModel
+import com.example.registro.viewmodels.UserViewModel
 import com.example.registro.ui.components.AppTextField
 import com.example.registro.ui.components.BotonPrincipal
 import com.example.registro.ui.components.BotonSecundario
@@ -41,9 +44,11 @@ fun ProfileScreen(
     uid: String,
     emailInicial: String,
     modifier: Modifier = Modifier,
+    authViewModel: AuthViewModel = viewModel(),
+    userViewModel: UserViewModel = viewModel(),
 ) {
     val context = LocalContext.current
-    val perfil by remember(uid) { UsuarioRepository.perfil(uid) }.collectAsState(initial = null)
+    val perfil by userViewModel.perfil.collectAsState()
 
     var nombre by remember { mutableStateOf("") }
     var telefono by remember { mutableStateOf("") }
@@ -55,6 +60,7 @@ fun ProfileScreen(
     var nueva by remember { mutableStateOf("") }
     var intentadoClave by remember { mutableStateOf(false) }
 
+    // los campos se rellenan una sola vez con los datos guardados
     LaunchedEffect(perfil) {
         perfil?.let {
             if (!cargado) {
@@ -65,7 +71,22 @@ fun ProfileScreen(
         }
     }
 
-    fun aviso(@androidx.annotation.StringRes mensaje: Int) = Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
+    LaunchedEffect(userViewModel) {
+        userViewModel.mensajes.collect { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+    }
+    LaunchedEffect(authViewModel) {
+        authViewModel.events.collect { evento ->
+            when (evento) {
+                is AuthEvent.Mensaje -> Toast.makeText(context, evento.texto, Toast.LENGTH_SHORT).show()
+                is AuthEvent.ContrasenaCambiada -> {
+                    actual = ""
+                    nueva = ""
+                    intentadoClave = false
+                }
+                else -> {}
+            }
+        }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -88,9 +109,7 @@ fun ProfileScreen(
                 foto = fotoNueva ?: perfil?.fotoPerfilUrl,
                 onFotoElegida = { uri ->
                     fotoNueva = uri
-                    UsuarioRepository.cambiarFoto(context, uid, uri) { resultado ->
-                        aviso(if (resultado.isSuccess) R.string.photo_uploaded else R.string.error_photo_upload)
-                    }
+                    userViewModel.cambiarFoto(context, uid, uri)
                 }
             )
 
@@ -108,9 +127,7 @@ fun ProfileScreen(
                 onClick = {
                     intentado = true
                     if (nombre.isNotBlank() && Validators.telefonoValido(telefono)) {
-                        UsuarioRepository.actualizarPerfil(uid, nombre, telefono) { resultado ->
-                            aviso(if (resultado.isSuccess) R.string.profile_saved else Validators.mensajeError(resultado.exceptionOrNull()))
-                        }
+                        userViewModel.guardarCambios(uid, nombre, telefono)
                     }
                 },
             )
@@ -128,14 +145,7 @@ fun ProfileScreen(
                 onClick = {
                     intentadoClave = true
                     if (actual.isNotEmpty() && Validators.passwordValida(nueva)) {
-                        UsuarioRepository.cambiarContrasena(actual, nueva) { resultado ->
-                            if (resultado.isSuccess) {
-                                actual = ""
-                                nueva = ""
-                                intentadoClave = false
-                            }
-                            aviso(if (resultado.isSuccess) R.string.password_changed else Validators.mensajeError(resultado.exceptionOrNull()))
-                        }
+                        authViewModel.cambiarContrasena(actual, nueva)
                     }
                 },
             )

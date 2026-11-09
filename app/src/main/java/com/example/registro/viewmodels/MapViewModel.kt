@@ -3,17 +3,16 @@ package com.example.registro.viewmodels
 import android.app.Application
 import android.location.Location
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.registro.data.CambioUsuario
 import com.example.registro.data.Usuario
-import com.example.registro.data.UsuarioRepository
 import com.example.registro.location.LocationTracker
+import com.example.registro.repository.RealtimeUserRepository
+import com.example.registro.repository.Subscription
+import com.example.registro.repository.UserRepository
 import com.mapbox.geojson.Point
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 data class OtroUsuario(val usuario: Usuario, val posicion: Point, val ruta: List<Point>)
 
@@ -26,39 +25,45 @@ data class MapState(
 )
 
 class MapViewModel(application: Application) : AndroidViewModel(application) {
-    private val uid = UsuarioRepository.uidActual.orEmpty()
+    private val users: UserRepository = RealtimeUserRepository()
     private val tracker = LocationTracker(application)
 
     private val _state = MutableStateFlow(MapState())
     val state: StateFlow<MapState> = _state.asStateFlow()
 
-    init {
-        viewModelScope.launch {
-            UsuarioRepository.perfil(uid).collect { perfil -> _state.update { it.copy(miPerfil = perfil) } }
-        }
-        viewModelScope.launch {
-            UsuarioRepository.cambiosEnLinea().collect { cambios -> cambios.forEach(::aplicarCambio) }
-        }
+    private var uid: String? = null
+    private var suscripciones = emptyList<Subscription>()
+
+    fun observar(uid: String) {
+        if (this.uid == uid) return
+        dejarDeObservar()
+        this.uid = uid
+        suscripciones = listOf(
+            users.observar(uid) { perfil -> _state.update { it.copy(miPerfil = perfil) } },
+            users.observarEnLinea { usuario, salio -> aplicarCambio(uid, usuario, salio) },
+        )
     }
 
-    private fun aplicarCambio(cambio: CambioUsuario) {
-        val usuario = cambio.usuario
-        if (usuario.id == uid) return
+    fun dejarDeObservar() {
+        suscripciones.forEach { it.cancel() }
+        suscripciones = emptyList()
+        uid = null
+        _state.value = MapState()
+    }
+
+    private fun aplicarCambio(miUid: String, usuario: Usuario, salio: Boolean) {
+        if (usuario.id == miUid) return
         _state.update { estado ->
             val otros = estado.otros.toMutableMap()
             val lat = usuario.latitud
             val lng = usuario.longitud
-            if (cambio.salio || !usuario.enLinea) {
+            if (salio || !usuario.enLinea) {
                 otros.remove(usuario.id)
             } else if (lat != null && lng != null) {
                 val punto = Point.fromLngLat(lng, lat)
-                val anterior = otros[usuario.id]
-                val ruta = when {
-                    anterior == null -> listOf(punto)
-                    anterior.posicion == punto -> anterior.ruta
-                    else -> anterior.ruta + punto
-                }
-                otros[usuario.id] = OtroUsuario(usuario, punto, ruta)
+                val ruta = otros[usuario.id]?.ruta.orEmpty()
+                // solo se agrega a la ruta si el usuario realmente se movió
+                otros[usuario.id] = OtroUsuario(usuario, punto, if (ruta.lastOrNull() == punto) ruta else ruta + punto)
             }
             estado.copy(otros = otros)
         }
@@ -69,9 +74,11 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun iniciarRastreo() {
+        val miUid = uid ?: return
         if (_state.value.rastreando) return
         _state.update { it.copy(rastreando = true, miRuta = emptyList()) }
-        UsuarioRepository.marcarEnLinea(uid, _state.value.miPosicion?.latitude(), _state.value.miPosicion?.longitude())
+        val pos = _state.value.miPosicion
+        users.actualizar(miUid, mapOf("enLinea" to true, "latitud" to pos?.latitude(), "longitud" to pos?.longitude()))
         tracker.iniciar { loc -> actualizarMiPosicion(loc, guardar = true) }
     }
 
@@ -79,26 +86,29 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         tracker.detener()
         val estabaRastreando = _state.value.rastreando
         _state.update { it.copy(rastreando = false, miRuta = emptyList()) }
-        if (estabaRastreando) UsuarioRepository.marcarDesconectado(uid, onListo) else onListo()
+        val miUid = uid
+        if (estabaRastreando && miUid != null) marcarDesconectado(miUid, onListo) else onListo()
+    }
+
+    private fun marcarDesconectado(miUid: String, onListo: () -> Unit = {}) {
+        users.actualizar(miUid, mapOf("enLinea" to false, "latitud" to null, "longitud" to null)) { onListo() }
     }
 
     private fun actualizarMiPosicion(loc: Location, guardar: Boolean) {
         val punto = Point.fromLngLat(loc.longitude, loc.latitude)
         _state.update { it.copy(miPosicion = punto, miRuta = if (it.rastreando) it.miRuta + punto else it.miRuta) }
-        if (guardar) UsuarioRepository.actualizarPosicion(uid, loc.latitude, loc.longitude)
-    }
-
-    fun cerrarSesion(onListo: () -> Unit) {
-        detenerRastreo {
-            UsuarioRepository.cerrarSesion()
-            onListo()
+        val miUid = uid
+        if (guardar && miUid != null) {
+            users.actualizar(miUid, mapOf("latitud" to loc.latitude, "longitud" to loc.longitude))
         }
     }
 
     override fun onCleared() {
-        if (_state.value.rastreando) {
+        val miUid = uid
+        if (_state.value.rastreando && miUid != null) {
             tracker.detener()
-            UsuarioRepository.marcarDesconectado(uid)
+            marcarDesconectado(miUid)
         }
+        suscripciones.forEach { it.cancel() }
     }
 }

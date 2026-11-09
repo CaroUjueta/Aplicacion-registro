@@ -15,18 +15,24 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.registro.R
-import com.example.registro.data.UsuarioRepository
+import com.example.registro.viewmodels.AuthEvent
+import com.example.registro.viewmodels.AuthState
+import com.example.registro.viewmodels.AuthViewModel
 import com.example.registro.ui.components.AppTextField
 import com.example.registro.ui.components.BotonPrincipal
 import com.example.registro.ui.components.EnlaceAccion
@@ -37,14 +43,21 @@ fun LoginScreen(
     onLogin: (String) -> Unit,
     onRegistrar: () -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: AuthViewModel = viewModel(),
 ) {
+    val state by viewModel.state.collectAsState()
+    LaunchedEffect(Unit) { viewModel.limpiarEstado() }
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var intentado by rememberSaveable { mutableStateOf(false) }
-    var cargando by remember { mutableStateOf(false) }
-    var errorServidor by remember { mutableStateOf<Int?>(null) }
-    var mensajeInfo by remember { mutableStateOf<Int?>(null) }
 
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { evento ->
+            if (evento is AuthEvent.IrAlMapa) onLogin(email.trim())
+        }
+    }
+
+    val cargando = state is AuthState.Loading
     val errorEmail = if (intentado && !Validators.emailValido(email)) stringResource(R.string.error_email_invalid) else null
     val errorPassword = if (intentado && !Validators.passwordValida(password)) stringResource(R.string.error_password_short) else null
 
@@ -71,20 +84,12 @@ fun LoginScreen(
                 textAlign = TextAlign.Center
             )
             AppTextField(email, { email = it }, stringResource(R.string.field_email), error = errorEmail,
-                keyboardType = androidx.compose.ui.text.input.KeyboardType.Email, enabled = !cargando)
+                keyboardType = KeyboardType.Email, enabled = !cargando)
             AppTextField(password, { password = it }, stringResource(R.string.field_password), error = errorPassword,
                 isPassword = true, enabled = !cargando)
 
-            errorServidor?.let {
-                Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
-            }
-            mensajeInfo?.let {
-                Text(
-                    stringResource(it),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
-                )
+            (state as? AuthState.Error)?.let {
+                Text(stringResource(it.mensaje), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             }
 
             BotonPrincipal(
@@ -92,14 +97,7 @@ fun LoginScreen(
                 onClick = {
                     intentado = true
                     if (Validators.emailValido(email) && Validators.passwordValida(password)) {
-                        cargando = true
-                        errorServidor = null
-                        mensajeInfo = null
-                        UsuarioRepository.iniciarSesion(email, password) { resultado ->
-                            cargando = false
-                            resultado.onSuccess { onLogin(email.trim()) }
-                                .onFailure { errorServidor = Validators.mensajeError(it) }
-                        }
+                        viewModel.login(email, password)
                     }
                 },
                 cargando = cargando,
@@ -107,18 +105,8 @@ fun LoginScreen(
             EnlaceAccion(
                 texto = stringResource(R.string.forgot_password),
                 onClick = {
-                    mensajeInfo = null
-                    if (!Validators.emailValido(email)) {
-                        errorServidor = R.string.error_email_required_reset
-                    } else {
-                        cargando = true
-                        errorServidor = null
-                        UsuarioRepository.recuperarContrasena(email) { resultado ->
-                            cargando = false
-                            resultado.onSuccess { mensajeInfo = R.string.reset_email_sent }
-                                .onFailure { errorServidor = Validators.mensajeError(it) }
-                        }
-                    }
+                    if (Validators.emailValido(email)) viewModel.olvideContrasena(email)
+                    else viewModel.mostrarError(R.string.error_email_required_reset)
                 },
                 enabled = !cargando
             )

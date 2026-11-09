@@ -12,9 +12,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -24,8 +25,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.registro.R
-import com.example.registro.data.UsuarioRepository
+import com.example.registro.viewmodels.AuthEvent
+import com.example.registro.viewmodels.AuthState
+import com.example.registro.viewmodels.AuthViewModel
 import com.example.registro.ui.components.AppTextField
 import com.example.registro.ui.components.BotonPrincipal
 import com.example.registro.ui.components.EnlaceAccion
@@ -37,7 +41,10 @@ fun RegisterScreen(
     onRegistrado: (String) -> Unit,
     onVolver: () -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: AuthViewModel = viewModel(),
 ) {
+    val state by viewModel.state.collectAsState()
+    LaunchedEffect(Unit) { viewModel.limpiarEstado() }
     val context = LocalContext.current
     var nombre by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
@@ -45,8 +52,13 @@ fun RegisterScreen(
     var telefono by rememberSaveable { mutableStateOf("") }
     var foto by rememberSaveable { mutableStateOf<Uri?>(null) }
     var intentado by rememberSaveable { mutableStateOf(false) }
-    var cargando by remember { mutableStateOf(false) }
-    var errorServidor by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { evento ->
+            if (evento is AuthEvent.IrAlMapa) onRegistrado(nombre.trim())
+        }
+    }
+
+    val cargando = state is AuthState.Loading
 
     val errorNombre = if (intentado && nombre.isBlank()) stringResource(R.string.error_name_required) else null
     val errorEmail = if (intentado && !Validators.emailValido(email)) stringResource(R.string.error_email_invalid) else null
@@ -78,8 +90,8 @@ fun RegisterScreen(
             AppTextField(telefono, { telefono = it }, stringResource(R.string.field_phone), error = errorTelefono,
                 keyboardType = KeyboardType.Phone, enabled = !cargando)
 
-            errorServidor?.let {
-                Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+            (state as? AuthState.Error)?.let {
+                Text(stringResource(it.mensaje), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             }
 
             BotonPrincipal(
@@ -88,15 +100,7 @@ fun RegisterScreen(
                     intentado = true
                     val valido = nombre.isNotBlank() && Validators.emailValido(email) &&
                         Validators.passwordValida(password) && Validators.telefonoValido(telefono)
-                    if (valido) {
-                        cargando = true
-                        errorServidor = null
-                        UsuarioRepository.registrar(context, nombre, email, password, telefono, foto) { resultado ->
-                            cargando = false
-                            resultado.onSuccess { onRegistrado(nombre.trim()) }
-                                .onFailure { errorServidor = Validators.mensajeError(it) }
-                        }
-                    }
+                    if (valido) viewModel.register(context, nombre, email, password, telefono, foto)
                 },
                 cargando = cargando,
             )

@@ -7,15 +7,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
-import com.example.registro.data.UsuarioRepository
+import com.google.firebase.auth.FirebaseAuth
 import com.example.registro.ui.screens.LoginScreen
 import com.example.registro.ui.theme.AppTheme
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (UsuarioRepository.haySesion) {
-            irAlMapa(UsuarioRepository.emailActual)
+        val sesion = FirebaseAuth.getInstance().currentUser
+        if (sesion != null) {
+            irAlMapa(sesion.email)
             return
         }
         enableEdgeToEdge()
