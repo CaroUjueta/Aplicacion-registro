@@ -5,13 +5,17 @@ import android.location.Location
 import androidx.lifecycle.AndroidViewModel
 import com.example.registro.data.Usuario
 import com.example.registro.location.LocationTracker
-import com.example.registro.repository.RealtimeUserRepository
+import com.example.registro.repository.FirestoreUserRepository
 import com.example.registro.repository.Subscription
 import com.example.registro.repository.UserRepository
 import com.mapbox.geojson.Point
+import com.example.registro.utils.Validators
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 
 data class OtroUsuario(val usuario: Usuario, val posicion: Point, val ruta: List<Point>)
@@ -25,11 +29,14 @@ data class MapState(
 )
 
 class MapViewModel(application: Application) : AndroidViewModel(application) {
-    private val users: UserRepository = RealtimeUserRepository()
+    private val users: UserRepository = FirestoreUserRepository()
     private val tracker = LocationTracker(application)
 
     private val _state = MutableStateFlow(MapState())
     val state: StateFlow<MapState> = _state.asStateFlow()
+
+    private val _mensajes = Channel<Int>(Channel.BUFFERED)
+    val mensajes: Flow<Int> = _mensajes.receiveAsFlow()
 
     private var uid: String? = null
     private var suscripciones = emptyList<Subscription>()
@@ -39,9 +46,19 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         dejarDeObservar()
         this.uid = uid
         suscripciones = listOf(
-            users.observar(uid) { perfil -> _state.update { it.copy(miPerfil = perfil) } },
-            users.observarEnLinea { usuario, salio -> aplicarCambio(uid, usuario, salio) },
+            users.observar(uid) { resultado ->
+                resultado.onSuccess { perfil -> _state.update { it.copy(miPerfil = perfil) } }
+                    .onFailure { avisar(it) }
+            },
+            users.observarEnLinea { resultado ->
+                resultado.onSuccess { aplicarCambio(uid, it.usuario, it.salio) }
+                    .onFailure { avisar(it) }
+            },
         )
+    }
+
+    private fun avisar(e: Throwable) {
+        _mensajes.trySend(Validators.mensajeError(e))
     }
 
     fun dejarDeObservar() {

@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import com.example.registro.R
 import com.example.registro.data.Usuario
 import com.example.registro.repository.FirebaseStorageRepository
-import com.example.registro.repository.RealtimeUserRepository
+import com.example.registro.repository.FirestoreUserRepository
 import com.example.registro.repository.StorageRepository
 import com.example.registro.repository.Subscription
 import com.example.registro.repository.UserRepository
@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 
 class UserViewModel(
-    private val users: UserRepository = RealtimeUserRepository(),
+    private val users: UserRepository = FirestoreUserRepository(),
     private val storage: StorageRepository = FirebaseStorageRepository(),
 ) : ViewModel() {
     private val _perfil = MutableStateFlow<Usuario?>(null)
@@ -34,7 +34,10 @@ class UserViewModel(
 
     fun observar(uid: String) {
         suscripcion?.cancel()
-        suscripcion = users.observar(uid) { _perfil.value = it }
+        suscripcion = users.observar(uid) { resultado ->
+            resultado.onSuccess { _perfil.value = it }
+                .onFailure { avisar(Validators.mensajeError(it)) }
+        }
     }
 
     fun dejarDeObservar() {

@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import com.example.registro.R
 import com.example.registro.data.Usuario
 import com.example.registro.repository.FirebaseStorageRepository
-import com.example.registro.repository.RealtimeUserRepository
+import com.example.registro.repository.FirestoreUserRepository
 import com.example.registro.repository.StorageRepository
 import com.example.registro.repository.UserRepository
 import com.example.registro.utils.ImageUtils
@@ -38,7 +38,7 @@ sealed interface AuthEvent {
 
 class AuthViewModel(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
-    private val users: UserRepository = RealtimeUserRepository(),
+    private val users: UserRepository = FirestoreUserRepository(),
     private val storage: StorageRepository = FirebaseStorageRepository(),
 ) : ViewModel() {
     private val _state = MutableStateFlow<AuthState>(AuthState.Idle)
