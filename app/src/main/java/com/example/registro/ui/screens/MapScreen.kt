@@ -92,6 +92,10 @@ fun MapScreen(
         if (tienePermiso()) viewModel.ubicarUnaVez()
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.mensajes.collect { snackbar.showSnackbar(context.getString(it)) }
+    }
+
     val nombrePerfil = state.miPerfil?.nombre
     LaunchedEffect(nombrePerfil) {
         val nombre = nombreBienvenida ?: nombrePerfil
