@@ -3,6 +3,7 @@ package com.example.registro.viewmodels
 import android.app.Application
 import android.location.Location
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.registro.data.Usuario
 import com.example.registro.location.LocationTracker
 import com.example.registro.repository.FirestoreUserRepository
@@ -17,6 +18,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 data class OtroUsuario(val usuario: Usuario, val posicion: Point, val ruta: List<Point>)
 
@@ -40,6 +45,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     private var uid: String? = null
     private var suscripciones = emptyList<Subscription>()
+    private var latido: Job? = null
 
     fun observar(uid: String) {
         if (this.uid == uid) return
@@ -55,6 +61,24 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                     .onFailure { avisar(it) }
             },
         )
+        latido = viewModelScope.launch {
+            while (isActive) {
+                delay(INTERVALO_LATIDO)
+                if (_state.value.rastreando) {
+                    users.actualizar(uid, mapOf("ultimaActividad" to System.currentTimeMillis()))
+                }
+                purgarInactivos()
+            }
+        }
+    }
+
+    // quita del mapa a quien dejó de reportar actividad (app cerrada a la fuerza, sin red, etc.)
+    private fun purgarInactivos() {
+        val limite = System.currentTimeMillis() - TIEMPO_INACTIVO
+        _state.update { estado ->
+            val activos = estado.otros.filterValues { it.usuario.ultimaActividad >= limite }
+            if (activos.size == estado.otros.size) estado else estado.copy(otros = activos)
+        }
     }
 
     private fun avisar(e: Throwable) {
@@ -62,6 +86,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun dejarDeObservar() {
+        latido?.cancel()
+        latido = null
         suscripciones.forEach { it.cancel() }
         suscripciones = emptyList()
         uid = null
@@ -74,7 +100,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             val otros = estado.otros.toMutableMap()
             val lat = usuario.latitud
             val lng = usuario.longitud
-            if (salio || !usuario.enLinea) {
+            if (salio || !usuario.enLinea || usuario.ultimaActividad < System.currentTimeMillis() - TIEMPO_INACTIVO) {
                 otros.remove(usuario.id)
             } else if (lat != null && lng != null) {
                 val punto = Point.fromLngLat(lng, lat)
@@ -95,7 +121,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         if (_state.value.rastreando) return
         _state.update { it.copy(rastreando = true, miRuta = emptyList()) }
         val pos = _state.value.miPosicion
-        users.actualizar(miUid, mapOf("enLinea" to true, "latitud" to pos?.latitude(), "longitud" to pos?.longitude()))
+        users.actualizar(miUid, mapOf("enLinea" to true, "latitud" to pos?.latitude(), "longitud" to pos?.longitude(), "ultimaActividad" to System.currentTimeMillis()))
         tracker.iniciar { loc -> actualizarMiPosicion(loc, guardar = true) }
     }
 
@@ -116,7 +142,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         _state.update { it.copy(miPosicion = punto, miRuta = if (it.rastreando) it.miRuta + punto else it.miRuta) }
         val miUid = uid
         if (guardar && miUid != null) {
-            users.actualizar(miUid, mapOf("latitud" to loc.latitude, "longitud" to loc.longitude))
+            users.actualizar(miUid, mapOf("latitud" to loc.latitude, "longitud" to loc.longitude, "ultimaActividad" to System.currentTimeMillis()))
         }
     }
 
@@ -127,5 +153,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             marcarDesconectado(miUid)
         }
         suscripciones.forEach { it.cancel() }
+    }
+
+    private companion object {
+        const val INTERVALO_LATIDO = 30_000L
+        const val TIEMPO_INACTIVO = 90_000L
     }
 }

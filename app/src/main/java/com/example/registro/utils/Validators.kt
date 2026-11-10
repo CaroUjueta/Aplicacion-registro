@@ -9,6 +9,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
+import com.google.firebase.firestore.FirebaseFirestoreException
 
 object Validators {
     fun emailValido(email: String) = Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()
@@ -21,6 +22,11 @@ object Validators {
         is FirebaseAuthUserCollisionException -> R.string.error_email_in_use
         is FirebaseAuthWeakPasswordException -> R.string.error_weak_password
         is FirebaseNetworkException -> R.string.error_network
+        is FirebaseFirestoreException -> when (e.code) {
+            FirebaseFirestoreException.Code.PERMISSION_DENIED -> R.string.error_permission_denied
+            FirebaseFirestoreException.Code.UNAVAILABLE -> R.string.error_network
+            else -> R.string.error_unknown
+        }
         is FirebaseTooManyRequestsException -> R.string.error_too_many
         else -> R.string.error_unknown
     }

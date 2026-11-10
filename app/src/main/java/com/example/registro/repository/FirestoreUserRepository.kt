@@ -75,6 +75,7 @@ class FirestoreUserRepository(
             latitud = getDouble("latitud"),
             longitud = getDouble("longitud"),
             fotoPerfilUrl = getString("fotoPerfilUrl"),
+            ultimaActividad = getLong("ultimaActividad") ?: 0L,
         )
     }
 

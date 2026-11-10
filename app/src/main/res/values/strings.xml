@@ -62,6 +62,7 @@
     <string name="error_weak_password">La contraseña es muy débil</string>
     <string name="error_network">Sin conexión a internet</string>
     <string name="error_too_many">Demasiados intentos, espera un momento</string>
+    <string name="error_permission_denied">Sin permiso para leer el mapa (revisa las reglas de Firestore)</string>
     <string name="error_unknown">Ocurrió un error, inténtalo de nuevo</string>
     <string name="error_photo_upload">No se pudo subir la foto</string>
 </resources>
