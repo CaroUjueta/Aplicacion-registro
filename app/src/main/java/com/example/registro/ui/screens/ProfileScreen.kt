@@ -60,7 +60,6 @@ fun ProfileScreen(
     var nueva by remember { mutableStateOf("") }
     var intentadoClave by remember { mutableStateOf(false) }
 
-    // los campos se rellenan una sola vez con los datos guardados
     LaunchedEffect(perfil) {
         perfil?.let {
             if (!cargado) {
@@ -72,12 +71,12 @@ fun ProfileScreen(
     }
 
     LaunchedEffect(userViewModel) {
-        userViewModel.mensajes.collect { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+        userViewModel.mensajes.collect { Toast.makeText(context, it.asString(context), Toast.LENGTH_SHORT).show() }
     }
     LaunchedEffect(authViewModel) {
         authViewModel.events.collect { evento ->
             when (evento) {
-                is AuthEvent.Mensaje -> Toast.makeText(context, evento.texto, Toast.LENGTH_SHORT).show()
+                is AuthEvent.Mensaje -> Toast.makeText(context, evento.texto.asString(context), Toast.LENGTH_SHORT).show()
                 is AuthEvent.ContrasenaCambiada -> {
                     actual = ""
                     nueva = ""
@@ -109,7 +108,7 @@ fun ProfileScreen(
                 foto = fotoNueva ?: perfil?.fotoPerfilUrl,
                 onFotoElegida = { uri ->
                     fotoNueva = uri
-                    userViewModel.cambiarFoto(context, uid, uri)
+                    userViewModel.cambiarFoto(uid, uri)
                 }
             )
 

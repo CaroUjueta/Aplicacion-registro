@@ -1,5 +1,7 @@
 package com.example.registro.repository
 
+import android.net.Uri
+
 interface StorageRepository {
-    fun subirFotoPerfil(uid: String, bytes: ByteArray, onResult: (Result<String>) -> Unit)
+    fun subirFotoPerfil(uid: String, uri: Uri, onResult: (Result<String>) -> Unit)
 }

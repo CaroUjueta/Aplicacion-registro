@@ -4,7 +4,7 @@ service firebase.storage {
   match /b/{bucket}/o {
     function esImagen() {
       return request.resource.contentType.matches('image/.*')
-        && request.resource.size < 5 * 1024 * 1024;
+        && request.resource.size < 20 * 1024 * 1024;
     }
 
     match /registro/{uid}/perfil.jpg {

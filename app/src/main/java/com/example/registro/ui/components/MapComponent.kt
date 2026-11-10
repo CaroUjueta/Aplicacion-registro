@@ -33,11 +33,12 @@ import com.mapbox.maps.viewannotation.viewAnnotationOptions
 @Composable
 fun MapComponent(
     state: MapState,
+    miPosicion: Point?,
+    miRuta: List<Point>,
     viewport: MapViewportState,
     margenInferior: Dp = 0.dp,
     modifier: Modifier = Modifier,
 ) {
-    val miPosicion = state.miPosicion
     val colorMio = MaterialTheme.colorScheme.primary
     val miNombre = stringResource(R.string.you)
 
@@ -63,8 +64,8 @@ fun MapComponent(
                 miPosicion?.let { viewport.setCameraOptions { center(it); zoom(16.0) } }
             }
 
-            if (state.miRuta.size > 1) {
-                Recorrido(puntos = state.miRuta, color = colorMio)
+            if (miRuta.size > 1) {
+                Recorrido(puntos = miRuta, color = colorMio)
             }
             state.otros.values.forEach { otro ->
                 key("ruta-${otro.usuario.id}") {

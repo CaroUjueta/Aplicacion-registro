@@ -15,11 +15,16 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import com.example.registro.ui.screens.MapScreen
 import com.example.registro.ui.theme.AppTheme
+import com.example.registro.viewmodels.LocationViewModel
 import com.example.registro.viewmodels.MapViewModel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 
 class MapActivity : ComponentActivity() {
     private val viewModel: MapViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
+    private val locationViewModel: LocationViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,6 +35,14 @@ class MapActivity : ComponentActivity() {
             return
         }
         viewModel.observar(uid)
+        locationViewModel.setup(this)
+        lifecycleScope.launch {
+            locationViewModel.state
+                .map { it.route.lastOrNull() }
+                .distinctUntilChanged()
+                .filterNotNull()
+                .collect { viewModel.registrarPosicion(it.latitude, it.longitude) }
+        }
         lifecycleScope.launch {
             authViewModel.events.collect { if (it is AuthEvent.IrALogin) irALogin() }
         }
@@ -39,6 +52,7 @@ class MapActivity : ComponentActivity() {
             AppTheme {
                 MapScreen(
                     viewModel = viewModel,
+                    locationViewModel = locationViewModel,
                     nombreBienvenida = nombre,
                     modifier = Modifier.fillMaxSize(),
                     onPerfil = {
@@ -50,8 +64,12 @@ class MapActivity : ComponentActivity() {
                         )
                     },
                     onCerrarSesion = {
-                        // primero se marca al usuario fuera de línea y después se cierra la sesión
-                        viewModel.detenerRastreo { authViewModel.logout() }
+                        locationViewModel.stopLocationUpdates()
+                        locationViewModel.clearRoute()
+                        viewModel.desconectar {
+                            viewModel.dejarDeObservar()
+                            authViewModel.logout()
+                        }
                     }
                 )
             }

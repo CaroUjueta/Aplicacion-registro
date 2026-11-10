@@ -1,6 +1,5 @@
 package com.example.registro.viewmodels
 
-import android.content.Context
 import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
@@ -10,7 +9,7 @@ import com.example.registro.repository.FirebaseStorageRepository
 import com.example.registro.repository.FirestoreUserRepository
 import com.example.registro.repository.StorageRepository
 import com.example.registro.repository.UserRepository
-import com.example.registro.utils.ImageUtils
+import com.example.registro.utils.UiText
 import com.example.registro.utils.Validators
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.EmailAuthProvider
@@ -26,14 +25,14 @@ import kotlinx.coroutines.flow.receiveAsFlow
 sealed interface AuthState {
     data object Idle : AuthState
     data object Loading : AuthState
-    data class Error(@StringRes val mensaje: Int) : AuthState
+    data class Error(val mensaje: UiText) : AuthState
 }
 
 sealed interface AuthEvent {
     data object IrAlMapa : AuthEvent
     data object IrALogin : AuthEvent
     data object ContrasenaCambiada : AuthEvent
-    data class Mensaje(@StringRes val texto: Int) : AuthEvent
+    data class Mensaje(val texto: UiText) : AuthEvent
 }
 
 class AuthViewModel(
@@ -73,7 +72,6 @@ class AuthViewModel(
     }
 
     fun register(
-        context: Context,
         nombre: String,
         email: String,
         password: String,
@@ -82,17 +80,17 @@ class AuthViewModel(
     ) {
         _state.value = AuthState.Loading
         auth.createUserWithEmailAndPassword(email.trim(), password).addOnCompleteListener { task ->
-            val uid = task.result?.user?.uid
-            if (!task.isSuccessful || uid == null) {
+            val uid = if (task.isSuccessful) task.result?.user?.uid else null
+            if (uid == null) {
                 _state.value = AuthState.Error(Validators.mensajeError(task.exception))
                 return@addOnCompleteListener
             }
             val usuario = Usuario(nombre = nombre.trim(), email = email.trim(), telefono = telefono.trim())
-            val bytes = foto?.let { ImageUtils.comprimir(context, it) }
-            if (bytes == null) {
+            if (foto == null) {
                 guardarPerfil(uid, usuario)
             } else {
-                storage.subirFotoPerfil(uid, bytes) { subida ->
+                storage.subirFotoPerfil(uid, foto) { subida ->
+                    subida.onFailure { _events.trySend(AuthEvent.Mensaje(Validators.mensajeError(it))) }
                     guardarPerfil(uid, usuario.copy(fotoPerfilUrl = subida.getOrNull()))
                 }
             }
@@ -115,7 +113,7 @@ class AuthViewModel(
         auth.sendPasswordResetEmail(email.trim()).addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 _state.value = AuthState.Idle
-                _events.trySend(AuthEvent.Mensaje(R.string.reset_email_sent))
+                _events.trySend(AuthEvent.Mensaje(UiText.Resource(R.string.reset_email_sent)))
             } else {
                 _state.value = AuthState.Error(Validators.mensajeError(task.exception))
             }
@@ -133,7 +131,7 @@ class AuthViewModel(
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     _events.trySend(AuthEvent.ContrasenaCambiada)
-                    _events.trySend(AuthEvent.Mensaje(R.string.password_changed))
+                    _events.trySend(AuthEvent.Mensaje(UiText.Resource(R.string.password_changed)))
                 } else {
                     _events.trySend(AuthEvent.Mensaje(Validators.mensajeError(task.exception)))
                 }
@@ -141,7 +139,7 @@ class AuthViewModel(
     }
 
     fun mostrarError(@StringRes mensaje: Int) {
-        _state.value = AuthState.Error(mensaje)
+        _state.value = AuthState.Error(UiText.Resource(mensaje))
     }
 
     fun limpiarEstado() {

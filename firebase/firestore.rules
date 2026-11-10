@@ -24,15 +24,12 @@ service cloud.firestore {
         && (!('ultimaActividad' in d) || d.ultimaActividad is number);
     }
 
-    // Cualquier usuario autenticado puede ver a los demás (mapa); solo el dueño escribe su documento.
     match /perfilesMapa/{uid} {
       allow read: if signedIn();
       allow create, update: if esDueno(uid) && datosValidos();
       allow delete: if false;
     }
 
-
-    // Todo lo demás está cerrado
     match /{document=**} {
       allow read, write: if false;
     }

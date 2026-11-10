@@ -1,5 +1,6 @@
 package com.example.registro.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -46,6 +48,7 @@ fun LoginScreen(
     viewModel: AuthViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
     LaunchedEffect(Unit) { viewModel.limpiarEstado() }
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
@@ -53,7 +56,11 @@ fun LoginScreen(
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { evento ->
-            if (evento is AuthEvent.IrAlMapa) onLogin(email.trim())
+            when (evento) {
+                is AuthEvent.IrAlMapa -> onLogin(email.trim())
+                is AuthEvent.Mensaje -> Toast.makeText(context, evento.texto.asString(context), Toast.LENGTH_LONG).show()
+                else -> {}
+            }
         }
     }
 
@@ -89,7 +96,7 @@ fun LoginScreen(
                 isPassword = true, enabled = !cargando)
 
             (state as? AuthState.Error)?.let {
-                Text(stringResource(it.mensaje), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                Text(it.mensaje.asString(), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             }
 
             BotonPrincipal(

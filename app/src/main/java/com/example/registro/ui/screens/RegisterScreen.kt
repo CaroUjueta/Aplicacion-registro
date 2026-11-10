@@ -1,6 +1,7 @@
 package com.example.registro.ui.screens
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,7 +55,11 @@ fun RegisterScreen(
     var intentado by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(viewModel) {
         viewModel.events.collect { evento ->
-            if (evento is AuthEvent.IrAlMapa) onRegistrado(nombre.trim())
+            when (evento) {
+                is AuthEvent.IrAlMapa -> onRegistrado(nombre.trim())
+                is AuthEvent.Mensaje -> Toast.makeText(context.applicationContext, evento.texto.asString(context), Toast.LENGTH_LONG).show()
+                else -> {}
+            }
         }
     }
 
@@ -91,7 +96,7 @@ fun RegisterScreen(
                 keyboardType = KeyboardType.Phone, enabled = !cargando)
 
             (state as? AuthState.Error)?.let {
-                Text(stringResource(it.mensaje), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                Text(it.mensaje.asString(), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             }
 
             BotonPrincipal(
@@ -100,7 +105,7 @@ fun RegisterScreen(
                     intentado = true
                     val valido = nombre.isNotBlank() && Validators.emailValido(email) &&
                         Validators.passwordValida(password) && Validators.telefonoValido(telefono)
-                    if (valido) viewModel.register(context, nombre, email, password, telefono, foto)
+                    if (valido) viewModel.register(nombre, email, password, telefono, foto)
                 },
                 cargando = cargando,
             )

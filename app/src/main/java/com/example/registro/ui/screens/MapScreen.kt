@@ -57,6 +57,7 @@ import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.extension.compose.animation.viewport.rememberMapViewportState
 import com.example.registro.ui.components.MapComponent
+import com.example.registro.viewmodels.LocationViewModel
 import com.example.registro.viewmodels.MapViewModel
 
 private const val MAP_ZOOM = 16.0
@@ -65,6 +66,7 @@ private const val MAP_ZOOM = 16.0
 @Composable
 fun MapScreen(
     viewModel: MapViewModel,
+    locationViewModel: LocationViewModel,
     nombreBienvenida: String?,
     onPerfil: () -> Unit,
     onCerrarSesion: () -> Unit,
@@ -72,16 +74,34 @@ fun MapScreen(
 ) {
     val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val locationState by locationViewModel.state.collectAsStateWithLifecycle()
+    val miPosicion = locationState.ubicacion?.let { Point.fromLngLat(it.longitude, it.latitude) }
+    val miRuta = locationState.route.map { Point.fromLngLat(it.longitude, it.latitude) }
     var menuAbierto by remember { mutableStateOf(false) }
     var bienvenidaMostrada by rememberSaveable { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
+
+    fun encenderUbicacion() {
+        val pos = locationViewModel.state.value.ubicacion
+        viewModel.conectar(pos?.latitude, pos?.longitude) {
+            locationViewModel.stopLocationUpdates()
+            locationViewModel.clearRoute()
+        }
+        if (viewModel.state.value.rastreando) locationViewModel.startLocationUpdates()
+    }
+
+    fun apagarUbicacion() {
+        locationViewModel.stopLocationUpdates()
+        locationViewModel.clearRoute()
+        viewModel.desconectar()
+    }
 
     val permisos = rememberMultiplePermissionsState(
         listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
     ) { resultado ->
         if (resultado.values.any { it }) {
-            viewModel.ubicarUnaVez()
-            viewModel.iniciarRastreo()
+            locationViewModel.ubicacionActual()
+            encenderUbicacion()
         } else {
             Toast.makeText(context, R.string.location_permission_denied, Toast.LENGTH_LONG).show()
         }
@@ -89,11 +109,11 @@ fun MapScreen(
     fun tienePermiso() = permisos.permissions.any { it.status.isGranted }
 
     LaunchedEffect(Unit) {
-        if (tienePermiso()) viewModel.ubicarUnaVez()
+        if (tienePermiso()) locationViewModel.ubicacionActual()
     }
 
     LaunchedEffect(Unit) {
-        viewModel.mensajes.collect { snackbar.showSnackbar(context.getString(it)) }
+        viewModel.mensajes.collect { snackbar.showSnackbar(it.asString(context)) }
     }
 
     val nombrePerfil = state.miPerfil?.nombre
@@ -117,7 +137,7 @@ fun MapScreen(
     var alturaPanel by remember { mutableStateOf(0.dp) }
 
     Box(modifier.fillMaxSize()) {
-        MapComponent(state = state, viewport = viewport, margenInferior = alturaPanel, modifier = Modifier.fillMaxSize())
+        MapComponent(state = state, miPosicion = miPosicion, miRuta = miRuta, viewport = viewport, margenInferior = alturaPanel, modifier = Modifier.fillMaxSize())
 
         Row(
             modifier = Modifier
@@ -165,7 +185,7 @@ fun MapScreen(
                     icono = Icons.Rounded.MyLocation,
                     descripcion = stringResource(R.string.center_location),
                     onClick = {
-                        state.miPosicion?.let { viewport.flyTo(CameraOptions.Builder().center(it).zoom(MAP_ZOOM).build()) }
+                        miPosicion?.let { viewport.flyTo(CameraOptions.Builder().center(it).zoom(MAP_ZOOM).build()) }
                     },
                 )
             }
@@ -177,8 +197,8 @@ fun MapScreen(
                 enLinea = state.otros.size + if (state.rastreando) 1 else 0,
                 onCambio = { encender ->
                     when {
-                        !encender -> viewModel.detenerRastreo()
-                        tienePermiso() -> viewModel.iniciarRastreo()
+                        !encender -> apagarUbicacion()
+                        tienePermiso() -> encenderUbicacion()
                         else -> permisos.launchMultiplePermissionRequest()
                     }
                 }
